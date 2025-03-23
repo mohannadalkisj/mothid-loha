@@ -401,7 +401,7 @@ export default function NotificationsPage() {
               setActiveFilter(value as "all" | "withCard" | "withoutCard" | "online" | "allCards")
             }
           >
-            <TabsList className="grid w-full grid-cols-5">
+            <TabsList className="grid w-full grid-cols-3">
               <TabsTrigger value="all">الكل</TabsTrigger>
               <TabsTrigger value="online">متصل</TabsTrigger>
               <TabsTrigger value="allCards">جميع البطاقات</TabsTrigger>
